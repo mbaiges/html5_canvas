@@ -40,12 +40,12 @@ window.addEventListener('keyup', (event) => {
 
 // Models 
 
-const closeBoidsRange = 100;
-const boidTurnSpeed = 0.1;
+const closeBoidsRange = 50;
+const boidTurnSpeed = 0.02;
 const factors = {
     separation: 0,
     cohesion: 1,
-    alignment: 0
+    alignment: 1
 };
 
 class Boid{
@@ -183,10 +183,25 @@ class Boid{
             total.y += (boid.position.y - this.position.y);
         })
 
-        const size = Math.sqrt(Math.pow(total.x, 2) + Math.pow(total.x, 2));
+        const size = Math.sqrt(Math.pow(total.x, 2) + Math.pow(total.y, 2));
 
         total.x /= size;
         total.y /= size;
+
+        total.x = -total.x;
+        total.y = -total.y;
+
+        if (this.highlighted) {
+            c.beginPath();
+            c.strokeStyle = 'yellow';
+            c.lineTo(this.position.x, this.position.y);
+            c.lineTo(this.position.x + total.x * closeBoidsRange / 2, this.position.y + total.y * closeBoidsRange / 2);
+            c.globalAlpha = factors.separation;
+            c.closePath();
+            c.stroke();
+        }
+
+        let decidingAngle = Math.atan(total.y / total.x);
 
         return total;
     }
@@ -207,6 +222,16 @@ class Boid{
         total.x /= size;
         total.y /= size;
 
+        if (this.highlighted) {
+            c.beginPath();
+            c.strokeStyle = 'white';
+            c.lineTo(this.position.x, this.position.y);
+            c.lineTo(this.position.x + total.x * closeBoidsRange / 2, this.position.y + total.y * closeBoidsRange / 2);
+            c.globalAlpha = factors.alignment;
+            c.closePath();
+            c.stroke();
+        }
+        
         return total;
     }
     
@@ -223,7 +248,16 @@ class Boid{
 
         prom.x /= closestBoids.length;
         prom.y /= closestBoids.length;
-        
+
+        if (this.highlighted) {
+            c.beginPath();
+            c.fillStyle = 'green';
+            c.arc(prom.x, prom.y, 2, 0, 4 * Math.PI, false);
+            c.globalAlpha = factors.cohesion;
+            c.closePath();
+            c.fill();
+        }
+
         let vectorToCenter = {
             x: prom.x - this.position.x,
             y: prom.y - this.position.y
@@ -289,7 +323,7 @@ const colors = [
 ];
 
 var boids = [] 
-var total_boids = 20;
+var total_boids = 100;
 
 function init() {
     boids = [];
