@@ -40,16 +40,16 @@ window.addEventListener('keyup', (event) => {
 
 // Models 
 
-const closeBoidsRange = 1000;
+const closeBoidsRange = 100;
 const boidTurnSpeed = 0.1;
 const factors = {
-    separation: 1,
+    separation: 0,
     cohesion: 1,
-    alignment: 1
+    alignment: 0
 };
 
 class Boid{
-    constructor(x, y, midlen, speed, color){
+    constructor(x, y, midlen, speed, color, highlighted){
         this.position = {
             x: x,
             y: y
@@ -61,10 +61,12 @@ class Boid{
         this.calculateVelocity();
         this.calculateShape();
         this.color = color;
+        this.highlighted = highlighted;
     }
     
     draw(){
         c.beginPath();
+        c.globalAlpha = 1;
         c.fillStyle = this.color;
         c.moveTo(this.shape.head.x, this.shape.head.y);
         c.lineTo(this.shape.leftTail.x, this.shape.leftTail.y);
@@ -72,6 +74,15 @@ class Boid{
         c.lineTo(this.shape.rightTail.x, this.shape.rightTail.y);
         c.closePath();
         c.fill();
+
+        if (this.highlighted) {
+            c.beginPath();
+            c.fillStyle = 'red';
+            c.arc(this.position.x, this.position.y, closeBoidsRange, 0, 2 * Math.PI, false);
+            c.globalAlpha = 0.2;
+            c.closePath();
+            c.fill();
+        }
     }
     
     update(boids){
@@ -79,6 +90,9 @@ class Boid{
         const closestBoids = this.findBoidsInRange(boids)
 
         let variation;
+
+        if (this.highlighted)
+            console.log(closestBoids);
 
         if(closestBoids.length > 0){
             const sepVector = this.separation(closestBoids);
@@ -135,15 +149,26 @@ class Boid{
         if (desiredAngle < 0){
             desiredAngle += 2 * Math.PI;
         }
-        console.log(desiredAngle, this.angle) 
+        //console.log(desiredAngle, this.angle) 
         let ans;
-        if( ( ( (this.angle - desiredAngle) > 0) && ( (this.angle - desiredAngle) < Math.PI) ) || ( ( (desiredAngle - this.angle) > 0 ) && ((desiredAngle - this.angle) > Math.PI) ) ){
-            ans = boidTurnSpeed;
-        }else {
-            ans = -boidTurnSpeed;
+        if (this.angle <= desiredAngle) {
+            if (desiredAngle - this.angle <= Math.PI) {
+                ans = -boidTurnSpeed;
+            }
+            else {
+                ans = boidTurnSpeed;
+            }
+        }
+        else {
+            if (this.angle - desiredAngle <= Math.PI) {
+                ans = boidTurnSpeed;
+            }
+            else {
+                ans = -boidTurnSpeed;
+            }
         }
         
-        console.log(ans);;
+        //console.log(ans);;
         return ans;
     }
 
@@ -264,18 +289,19 @@ const colors = [
 ];
 
 var boids = [] 
-var total_boids = 100;
+var total_boids = 20;
 
 function init() {
     boids = [];
     for (let i = 0; i < total_boids; i++) {
+        const higlighted = i==0? 1:0;
         const speed = 2;
         const midlen = 20;
         const color = utils.randomColor(colors);
         const x = utils.randomIntFromRange(midlen, canvas.width - midlen);
         const y = utils.randomIntFromRange(midlen, canvas.height - midlen)
-        boids.push(new Boid(x, y, midlen, speed, color));
-    }
+        boids.push(new Boid(x, y, midlen, speed, color, higlighted));
+    } 
 }
 
 function animate() {
