@@ -40,12 +40,12 @@ window.addEventListener('keyup', (event) => {
 
 // Models 
 
-const closeBoidsRange = 50;
+const closeBoidsRange = 70;
 const boidTurnSpeed = 0.02;
 const factors = {
     separation: 0,
     cohesion: 1,
-    alignment: 1
+    alignment: 0
 };
 
 class Boid{
