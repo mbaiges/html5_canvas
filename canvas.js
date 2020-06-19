@@ -40,14 +40,6 @@ window.addEventListener('keyup', (event) => {
 
 // Models 
 
-const closeBoidsRange = 70;
-const boidTurnSpeed = 0.02;
-const factors = {
-    separation: 0,
-    cohesion: 1,
-    alignment: 0
-};
-
 class Boid{
     constructor(x, y, midlen, speed, color, highlighted){
         this.position = {
@@ -57,7 +49,6 @@ class Boid{
         this.headAlpha = Math.PI / 3;
         this.midlen = midlen;
         this.speed = speed;
-        this.angle = utils.randomFloatFromRange(0, 2 * Math.PI);
         this.calculateVelocity();
         this.calculateShape();
         this.color = color;
@@ -88,26 +79,6 @@ class Boid{
     update(boids){
 
         const closestBoids = this.findBoidsInRange(boids)
-
-        let variation;
-
-        if (this.highlighted)
-            console.log(closestBoids);
-
-        if(closestBoids.length > 0){
-            const sepVector = this.separation(closestBoids);
-            const aliVector = this.alignment(closestBoids);
-            const coheVector = this.cohesion(closestBoids);
-            //console.log(sepVector, aliVector, coheVector);
-            variation = this.parseMovement(sepVector, aliVector, coheVector);
-        }else{
-            variation = 0;
-        }
-
-        if ( ((this.angle + variation) % (2 * Math.PI)) < 0 ) {
-            this.angle += 2 * Math.PI;
-        }
-        this.angle = (this.angle + variation) % (2 * Math.PI);
         
         this.calculateVelocity();
 
@@ -132,146 +103,6 @@ class Boid{
             }
         });
         return closest;
-    }
-
-    parseMovement(sepVector, aliVector, coheVector) {
-        let totalVectorX = factors.separation * sepVector.x + factors.alignment * aliVector.x + factors.cohesion * coheVector.x;
-        let totalVectorY = factors.separation * sepVector.y + factors.alignment * aliVector.y + factors.cohesion * coheVector.y;
-
-        let desiredAngle;
-        //console.log(totalVectorX, totalVectorY);
-        if (totalVectorX !== 0) {
-            desiredAngle = Math.atan(totalVectorY / totalVectorX);
-        }
-        else {
-            desiredAngle = (Math.PI / 2) * Math.sign(totalVectorY);
-        }
-        if (desiredAngle < 0){
-            desiredAngle += 2 * Math.PI;
-        }
-        //console.log(desiredAngle, this.angle) 
-        let ans;
-        if (this.angle <= desiredAngle) {
-            if (desiredAngle - this.angle <= Math.PI) {
-                ans = -boidTurnSpeed;
-            }
-            else {
-                ans = boidTurnSpeed;
-            }
-        }
-        else {
-            if (this.angle - desiredAngle <= Math.PI) {
-                ans = boidTurnSpeed;
-            }
-            else {
-                ans = -boidTurnSpeed;
-            }
-        }
-        
-        //console.log(ans);;
-        return ans;
-    }
-
-    separation(closestBoids) {
-        let total = {
-            x: 0,
-            y: 0
-        }
-
-        closestBoids.forEach(boid => {
-            total.x += (boid.position.x - this.position.x);
-            total.y += (boid.position.y - this.position.y);
-        })
-
-        const size = Math.sqrt(Math.pow(total.x, 2) + Math.pow(total.y, 2));
-
-        total.x /= size;
-        total.y /= size;
-
-        total.x = -total.x;
-        total.y = -total.y;
-
-        if (this.highlighted) {
-            c.beginPath();
-            c.strokeStyle = 'yellow';
-            c.lineTo(this.position.x, this.position.y);
-            c.lineTo(this.position.x + total.x * closeBoidsRange / 2, this.position.y + total.y * closeBoidsRange / 2);
-            c.globalAlpha = factors.separation;
-            c.closePath();
-            c.stroke();
-        }
-
-        let decidingAngle = Math.atan(total.y / total.x);
-
-        return total;
-    }
-    
-    alignment(closestBoids){
-        let total = {
-            x: 0,
-            y: 0
-        };
-
-        closestBoids.forEach(boid => {
-            total.x += boid.velocity.x;
-            total.y += boid.velocity.y;
-        });
-
-        const size = Math.sqrt(Math.pow(total.x, 2) + Math.pow(total.y, 2));
-
-        total.x /= size;
-        total.y /= size;
-
-        if (this.highlighted) {
-            c.beginPath();
-            c.strokeStyle = 'white';
-            c.lineTo(this.position.x, this.position.y);
-            c.lineTo(this.position.x + total.x * closeBoidsRange / 2, this.position.y + total.y * closeBoidsRange / 2);
-            c.globalAlpha = factors.alignment;
-            c.closePath();
-            c.stroke();
-        }
-        
-        return total;
-    }
-    
-    cohesion(closestBoids) {
-        let prom = {
-            x: 0,
-            y: 0
-        }
-
-        closestBoids.forEach(boid => {
-            prom.x += boid.position.x;
-            prom.y += boid.position.y;
-        })
-
-        prom.x /= closestBoids.length;
-        prom.y /= closestBoids.length;
-
-        if (this.highlighted) {
-            c.beginPath();
-            c.fillStyle = 'green';
-            c.arc(prom.x, prom.y, 2, 0, 4 * Math.PI, false);
-            c.globalAlpha = factors.cohesion;
-            c.closePath();
-            c.fill();
-        }
-
-        let vectorToCenter = {
-            x: prom.x - this.position.x,
-            y: prom.y - this.position.y
-        }
-
-        const size = Math.sqrt(Math.pow(vectorToCenter.x, 2) + Math.pow(vectorToCenter.y, 2));
-
-        vectorToCenter.x /= size;
-        vectorToCenter.y /= size;
-
-        //console.log('asd');
-        //console.log(vectorToCenter);
-        
-        return vectorToCenter;
     }
 
     calculateVelocity(){
@@ -308,9 +139,6 @@ class Boid{
             x: this.position.x + Math.cos(leftTailAngle) * (this.midlen/2),
             y: this.position.y + Math.sin(leftTailAngle) * (this.midlen/2) 
         }
-
-        //console.log(this.shape.head, this.shape.leftTail, this.shape.rightTail);
-
     }
 }
 
